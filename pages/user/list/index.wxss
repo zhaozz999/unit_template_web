@@ -1,0 +1,58 @@
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.search-input {
+  height: 72rpx;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 10rpx;
+  padding: 0 18rpx;
+  background: #f8fafc;
+}
+
+.toolbar-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12rpx;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  margin-top: 60rpx;
+  color: #667085;
+}
+
+.user-card {
+  margin-top: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+.status,
+.sub {
+  font-size: 24rpx;
+  color: #475467;
+}
+
+.actions {
+  margin-top: 10rpx;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12rpx;
+}

@@ -1,0 +1,10 @@
+node_modules/
+miniprogram_npm/
+dist/
+
+project.private.config.json
+
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

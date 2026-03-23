@@ -1,0 +1,39 @@
+<view class="container">
+  <view class="card form-card">
+    <view class="title">{{mode === 'create' ? '新增用户' : '编辑用户'}}</view>
+
+    <view class="field">
+      <text class="label">openId</text>
+      <input
+        class="input"
+        placeholder="请输入 openId"
+        value="{{form.openId}}"
+        data-field="openId"
+        bindinput="onInput"
+        disabled="{{mode === 'edit'}}"
+      />
+    </view>
+
+    <view class="field">
+      <text class="label">nickName</text>
+      <input class="input" placeholder="请输入昵称" value="{{form.nickName}}" data-field="nickName" bindinput="onInput" />
+    </view>
+
+    <view class="field">
+      <text class="label">avatarUrl</text>
+      <input class="input" placeholder="请输入头像 URL" value="{{form.avatarUrl}}" data-field="avatarUrl" bindinput="onInput" />
+    </view>
+
+    <view class="field">
+      <text class="label">status</text>
+      <input class="input" placeholder="0 正常 / 1 停用" value="{{form.status}}" data-field="status" bindinput="onInput" />
+    </view>
+
+    <view class="field">
+      <text class="label">remark</text>
+      <textarea class="textarea" placeholder="备注信息" value="{{form.remark}}" data-field="remark" bindinput="onInput" />
+    </view>
+
+    <button class="btn-primary" loading="{{loading}}" bindtap="onSubmit">保存</button>
+  </view>
+</view>

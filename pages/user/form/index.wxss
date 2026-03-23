@@ -1,0 +1,34 @@
+.form-card {
+  margin-top: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.label {
+  font-size: 24rpx;
+  color: #344054;
+}
+
+.input,
+.textarea {
+  border: 1rpx solid #d0d5dd;
+  border-radius: 10rpx;
+  background: #f8fafc;
+  padding: 16rpx;
+}
+
+.input {
+  height: 72rpx;
+}
+
+.textarea {
+  min-height: 140rpx;
+  width: auto;
+}
