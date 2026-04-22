@@ -29,7 +29,11 @@
     "ignore": [],
     "include": []
   },
-  "appid": "wxc0ac2b0631c57982",
-  "editorSetting": {},
+  "appid": "touristappid",
+  "projectname": "unit-template-web",
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  },
   "libVersion": "3.15.0"
 }
