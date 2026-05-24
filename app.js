@@ -1,14 +1,20 @@
-const { getToken } = require('./utils/auth');
+const { APP_CONFIG } = require('./config/app');
+const { getToken, getUser } = require('./utils/auth');
 
 App({
   globalData: {
+    appName: APP_CONFIG.appName,
     userInfo: null,
+    hasLogin: false,
   },
 
   onLaunch() {
-    const token = getToken();
-    if (token) {
-      this.globalData.hasLogin = true;
-    }
+    this.globalData.userInfo = getUser() || null;
+    this.globalData.hasLogin = Boolean(getToken());
+  },
+
+  syncSession(user) {
+    this.globalData.userInfo = user || null;
+    this.globalData.hasLogin = Boolean(getToken());
   },
 });

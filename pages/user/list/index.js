@@ -1,20 +1,25 @@
 const { listUsers, deleteUser } = require('../../../api/user');
-const { clearToken, clearUser, isLogin } = require('../../../utils/auth');
+const { APP_CONFIG } = require('../../../config/app');
 const { formatDateTime } = require('../../../utils/date');
+const { ensureLogin, logout } = require('../../../utils/guard');
 
 Page({
   data: {
+    pageTitle: APP_CONFIG.demoModuleName,
     loading: false,
     keyword: '',
     users: [],
   },
 
   onShow() {
-    if (!isLogin()) {
-      wx.reLaunch({ url: '/pages/login/index' });
+    if (!ensureLogin()) {
       return;
     }
     this.loadUsers();
+  },
+
+  onPullDownRefresh() {
+    this.loadUsers({ stopPullDownRefresh: true });
   },
 
   onKeywordInput(event) {
@@ -25,7 +30,8 @@ Page({
     this.loadUsers();
   },
 
-  async loadUsers() {
+  async loadUsers(options = {}) {
+    const { stopPullDownRefresh = false } = options;
     this.setData({ loading: true });
     try {
       const result = await listUsers(this.data.keyword.trim());
@@ -38,6 +44,9 @@ Page({
       wx.showToast({ title: error.message || '加载失败', icon: 'none' });
     } finally {
       this.setData({ loading: false });
+      if (stopPullDownRefresh) {
+        wx.stopPullDownRefresh();
+      }
     }
   },
 
@@ -50,9 +59,13 @@ Page({
     wx.navigateTo({ url: `/pages/user/form/index?userId=${userId}` });
   },
 
+  goHome() {
+    wx.reLaunch({ url: '/pages/home/index' });
+  },
+
   async onDelete(event) {
     const userId = event.currentTarget.dataset.userId;
-    const confirmed = await this.confirm('确认删除该用户吗？');
+    const confirmed = await this.confirm('确认删除这个示例用户吗？');
     if (!confirmed) {
       return;
     }
@@ -67,9 +80,7 @@ Page({
   },
 
   logout() {
-    clearToken();
-    clearUser();
-    wx.reLaunch({ url: '/pages/login/index' });
+    logout({ showToast: false });
   },
 
   confirm(content) {
@@ -87,4 +98,3 @@ Page({
     });
   },
 });
-

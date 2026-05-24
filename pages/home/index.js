@@ -1,96 +1,99 @@
+const { APP_CONFIG } = require('../../config/app');
+const { getBaseUrl, getRuntimeEnv, clearBaseUrlOverride } = require('../../config/env');
+const { getUser, isLogin } = require('../../utils/auth');
+const { ensureLogin, redirectToLogin } = require('../../utils/guard');
+const { applyLayout } = require('../../utils/layout');
+
 Page({
   data: {
-    dateLabel: '',
-    safeBottom: 0,
+    appName: APP_CONFIG.appName,
     navHeight: 96,
-    hero: {
-      tag: '今日推荐',
-      titleLine1: 'Less is More.',
-      titleLine2: '极致简约。',
-      subtitle: '这是一个通用的 Java 后端驱动的小程序脚手架模板。'
-    },
+    safeBottom: 0,
+    dateLabel: '',
+    runtimeEnv: 'dev',
+    apiBaseUrl: '',
+    isLoggedIn: false,
+    currentUserName: '',
     featureList: [
       {
-        key: 'console',
-        iconColor: '#1677D9',
-        title: '控制台'
+        key: 'auth',
+        title: 'Login and session',
+        desc: 'WeChat login, token persistence, 401 redirect, and user cache.',
       },
       {
-        key: 'report',
-        iconColor: '#34C759',
-        title: '统计报表'
-      }
+        key: 'request',
+        title: 'Request wrapper',
+        desc: 'Unified request, environment switching, and local API override.',
+      },
+      {
+        key: 'demo',
+        title: 'Business demo',
+        desc: 'A complete list-create-edit-delete loop to clone for new modules.',
+      },
+      {
+        key: 'layout',
+        title: 'Reusable layout',
+        desc: 'Shared safe-area calculation and a reusable bottom navigation component.',
+      },
     ],
-    tabActive: 'home'
   },
 
   onLoad() {
-    this.initLayout();
-    this.setData({
-      dateLabel: this.formatDateLabel(new Date())
+    applyLayout(this, {
+      dateLabel: this.formatDateLabel(new Date()),
     });
+    this.refreshView();
   },
 
-  initLayout() {
-    const sys = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
-    const menuRect = wx.getMenuButtonBoundingClientRect ? wx.getMenuButtonBoundingClientRect() : null;
-    const statusBarHeight = sys.statusBarHeight || 20;
+  onShow() {
+    this.refreshView();
+  },
 
-    let navHeight = statusBarHeight + 44;
-    if (menuRect && menuRect.top) {
-      navHeight = menuRect.bottom + menuRect.top - statusBarHeight;
-    }
-
-    let safeBottom = 0;
-    if (sys.safeArea && sys.windowHeight) {
-      safeBottom = Math.max(0, sys.windowHeight - sys.safeArea.bottom);
-    }
-
+  refreshView() {
+    const user = getUser() || {};
     this.setData({
-      navHeight,
-      safeBottom
+      runtimeEnv: getRuntimeEnv(),
+      apiBaseUrl: getBaseUrl(),
+      isLoggedIn: isLogin(),
+      currentUserName: user.nickName || user.openId || '',
     });
   },
 
   formatDateLabel(date) {
-    const weekMap = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const week = weekMap[date.getDay()];
-    return `${month}月${day}日 ${week}`;
+    const weekMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day} ${weekMap[date.getDay()]}`;
   },
 
-  onHeroTap() {
-    wx.showToast({
-      title: '推荐内容展示中',
-      icon: 'none'
-    });
-  },
-
-  onFeatureTap(event) {
-    const item = event.currentTarget.dataset.item;
-    if (!item) {
+  goUserDemo() {
+    if (!ensureLogin()) {
       return;
     }
 
-    wx.showToast({
-      title: `${item.title} 即将开放`,
-      icon: 'none'
+    wx.navigateTo({
+      url: '/pages/user/list/index',
     });
   },
 
-  onTabTap(event) {
-    const key = event.currentTarget.dataset.key;
-    if (key === this.data.tabActive) {
-      return;
-    }
-
-    if (key === 'profile') {
-      wx.navigateTo({
+  goLogin() {
+    if (this.data.isLoggedIn) {
+      wx.reLaunch({
         url: '/pages/profile/index',
-        animationType: 'fade-in',
-        animationDuration: 120
       });
+      return;
     }
-  }
+
+    redirectToLogin();
+  },
+
+  resetApiBaseUrl() {
+    clearBaseUrlOverride();
+    this.refreshView();
+    wx.showToast({
+      title: '已恢复默认接口地址',
+      icon: 'none',
+    });
+  },
 });

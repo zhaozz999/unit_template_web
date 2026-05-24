@@ -24,6 +24,21 @@ function clearUser() {
   removeItem(USER_KEY);
 }
 
+function setSession(options = {}) {
+  const { token, user } = options;
+  if (token) {
+    setToken(token);
+  }
+  if (user !== undefined) {
+    setUser(user);
+  }
+}
+
+function clearSession() {
+  clearToken();
+  clearUser();
+}
+
 function isLogin() {
   return Boolean(getToken());
 }
@@ -35,5 +50,7 @@ module.exports = {
   setUser,
   getUser,
   clearUser,
+  setSession,
+  clearSession,
   isLogin,
 };

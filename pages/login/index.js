@@ -1,51 +1,120 @@
 const { miniLogin } = require('../../api/auth');
-const { setToken, setUser, isLogin } = require('../../utils/auth');
-const { getRuntimeEnv } = require('../../config/env');
-
-const DEV_OPEN_ID_KEY = 'template_dev_open_id';
-const DEFAULT_DEV_OPEN_ID = 'dev_user_001';
+const { APP_CONFIG } = require('../../config/app');
+const {
+  getBaseUrl,
+  getBaseUrlOverride,
+  getRuntimeEnv,
+  setBaseUrlOverride,
+  clearBaseUrlOverride,
+} = require('../../config/env');
+const { setSession, isLogin } = require('../../utils/auth');
+const { DEV_OPEN_ID_KEY, getItem, setItem } = require('../../utils/storage');
 
 Page({
   data: {
+    appName: APP_CONFIG.appName,
     loading: false,
     autoLoginTried: false,
     autoLoginFailed: false,
     autoLoginMessage: '',
     devOpenId: '',
     runtimeEnv: 'dev',
+    apiBaseUrl: '',
+    apiBaseUrlInput: '',
   },
 
   onLoad() {
-    const runtimeEnv = getRuntimeEnv();
-    let devOpenId = wx.getStorageSync(DEV_OPEN_ID_KEY) || '';
-
-    // 开发环境默认提供一个 devOpenId，便于本地无感调试。
-    if (runtimeEnv === 'dev' && !devOpenId) {
-      devOpenId = DEFAULT_DEV_OPEN_ID;
-      wx.setStorageSync(DEV_OPEN_ID_KEY, devOpenId);
-    }
-
-    this.setData({
-      runtimeEnv,
-      devOpenId,
-    });
+    this.refreshRuntime();
   },
 
   onShow() {
     if (isLogin()) {
-      wx.reLaunch({ url: '/pages/user/list/index' });
+      wx.reLaunch({ url: '/pages/home/index' });
       return;
     }
 
-    if (!this.data.autoLoginTried) {
+    if (!this.data.autoLoginTried && this.canAutoLogin()) {
       this.autoLogin();
     }
+  },
+
+  refreshRuntime() {
+    const runtimeEnv = getRuntimeEnv();
+    let devOpenId = getItem(DEV_OPEN_ID_KEY) || '';
+    if (runtimeEnv === 'dev' && !devOpenId) {
+      devOpenId = APP_CONFIG.defaultDevOpenId;
+      setItem(DEV_OPEN_ID_KEY, devOpenId);
+    }
+
+    const apiBaseUrl = getBaseUrl();
+    this.setData({
+      runtimeEnv,
+      devOpenId,
+      apiBaseUrl,
+      apiBaseUrlInput: getBaseUrlOverride() || apiBaseUrl,
+    });
+  },
+
+  canAutoLogin() {
+    return this.shouldUseDevOpenId();
   },
 
   onDevOpenIdInput(event) {
     const value = event.detail.value;
     this.setData({ devOpenId: value });
-    wx.setStorageSync(DEV_OPEN_ID_KEY, value);
+    setItem(DEV_OPEN_ID_KEY, value);
+  },
+
+  onApiBaseUrlInput(event) {
+    this.setData({
+      apiBaseUrlInput: event.detail.value,
+    });
+  },
+
+  saveApiBaseUrl() {
+    if (this.data.runtimeEnv === 'release') {
+      return;
+    }
+
+    const value = this.data.apiBaseUrlInput.trim();
+    if (!value) {
+      wx.showToast({
+        title: '请输入接口地址',
+        icon: 'none',
+      });
+      return;
+    }
+
+    const normalized = setBaseUrlOverride(value);
+    this.setData({
+      apiBaseUrl: normalized,
+      apiBaseUrlInput: normalized,
+      autoLoginTried: false,
+      autoLoginFailed: false,
+      autoLoginMessage: '',
+    });
+    wx.showToast({
+      title: '接口地址已保存',
+      icon: 'none',
+    });
+  },
+
+  clearApiBaseUrl() {
+    if (this.data.runtimeEnv === 'release') {
+      return;
+    }
+
+    clearBaseUrlOverride();
+    this.refreshRuntime();
+    this.setData({
+      autoLoginTried: false,
+      autoLoginFailed: false,
+      autoLoginMessage: '',
+    });
+    wx.showToast({
+      title: '已恢复默认接口地址',
+      icon: 'none',
+    });
   },
 
   async autoLogin() {
@@ -62,7 +131,16 @@ Page({
       autoLoginFailed: false,
       autoLoginMessage: '',
     });
-    this.autoLogin();
+
+    if (this.canAutoLogin()) {
+      this.autoLogin();
+      return;
+    }
+
+    wx.showToast({
+      title: '请先填写开发 openId',
+      icon: 'none',
+    });
   },
 
   async doLogin({ silent, source }) {
@@ -74,10 +152,9 @@ Page({
     try {
       const code = await this.getWxLoginCode();
       const profile = silent ? {} : await this.tryGetUserProfile();
-
       const payload = {
         code,
-        nickName: profile.nickName || 'MiniAppUser',
+        nickName: profile.nickName || APP_CONFIG.defaultUserName,
         avatarUrl: profile.avatarUrl || '',
       };
 
@@ -92,12 +169,17 @@ Page({
       }
 
       const fullToken = `${loginData.tokenType || 'Bearer'} ${loginData.token}`;
-      setToken(fullToken);
-      if (loginData.user) {
-        setUser(loginData.user);
+      setSession({
+        token: fullToken,
+        user: loginData.user || null,
+      });
+
+      const app = getApp();
+      if (app && typeof app.syncSession === 'function') {
+        app.syncSession(loginData.user || null);
       }
 
-      wx.reLaunch({ url: '/pages/user/list/index' });
+      wx.reLaunch({ url: '/pages/home/index' });
     } catch (error) {
       const message = error.message || '登录失败';
       if (source === 'auto') {
@@ -120,7 +202,7 @@ Page({
   },
 
   shouldUseDevOpenId() {
-    return this.data.runtimeEnv !== 'prod' && Boolean(this.data.devOpenId && this.data.devOpenId.trim());
+    return this.data.runtimeEnv !== 'release' && Boolean(this.data.devOpenId && this.data.devOpenId.trim());
   },
 
   getWxLoginCode() {

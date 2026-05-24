@@ -1,9 +1,12 @@
 const { createUser, updateUser, getUserDetail } = require('../../../api/user');
-const { isLogin } = require('../../../utils/auth');
+const { APP_CONFIG } = require('../../../config/app');
+const { ensureLogin } = require('../../../utils/guard');
 
 Page({
   data: {
+    pageTitle: APP_CONFIG.demoModuleName,
     mode: 'create',
+    modeLabel: 'Create user',
     userId: '',
     loading: false,
     form: {
@@ -16,19 +19,30 @@ Page({
   },
 
   onLoad(options) {
-    if (!isLogin()) {
-      wx.reLaunch({ url: '/pages/login/index' });
+    if (!ensureLogin()) {
       return;
     }
 
     const userId = options.userId || '';
     if (userId) {
-      this.setData({ mode: 'edit', userId });
+      this.setData({
+        mode: 'edit',
+        modeLabel: 'Edit user',
+        userId,
+      });
       this.loadDetail(userId);
     }
   },
 
-  async loadDetail(userId) {
+  onPullDownRefresh() {
+    if (this.data.mode === 'edit' && this.data.userId) {
+      this.loadDetail(this.data.userId, true);
+      return;
+    }
+    wx.stopPullDownRefresh();
+  },
+
+  async loadDetail(userId, stopPullDownRefresh = false) {
     this.setData({ loading: true });
     try {
       const result = await getUserDetail(userId);
@@ -46,6 +60,9 @@ Page({
       wx.showToast({ title: error.message || '加载详情失败', icon: 'none' });
     } finally {
       this.setData({ loading: false });
+      if (stopPullDownRefresh) {
+        wx.stopPullDownRefresh();
+      }
     }
   },
 

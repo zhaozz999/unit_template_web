@@ -1,4 +1,10 @@
 {
-  "dependencies": {
-  }
+  "name": "unit-template-web",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Reusable native WeChat mini program starter template",
+  "scripts": {
+    "check:js": "node --check app.js"
+  },
+  "dependencies": {}
 }

@@ -1,5 +1,12 @@
+.header-card {
+  margin-bottom: 20rpx;
+}
+
+.header-title {
+  font-size: 38rpx;
+}
+
 .form-card {
-  margin-top: 20rpx;
   display: flex;
   flex-direction: column;
   gap: 18rpx;

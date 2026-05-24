@@ -1,12 +1,15 @@
 <view class="container">
-  <view class="card form-card">
-    <view class="title">{{mode === 'create' ? '新增用户' : '编辑用户'}}</view>
+  <view class="card header-card">
+    <view class="title header-title">{{modeLabel}}</view>
+    <view class="subtitle">{{pageTitle}} sample form. Reuse this page structure for future create and edit flows.</view>
+  </view>
 
+  <view class="card form-card">
     <view class="field">
-      <text class="label">openId</text>
+      <text class="label">Open ID</text>
       <input
         class="input"
-        placeholder="请输入 openId"
+        placeholder="Enter openId"
         value="{{form.openId}}"
         data-field="openId"
         bindinput="onInput"
@@ -15,25 +18,49 @@
     </view>
 
     <view class="field">
-      <text class="label">nickName</text>
-      <input class="input" placeholder="请输入昵称" value="{{form.nickName}}" data-field="nickName" bindinput="onInput" />
+      <text class="label">Nickname</text>
+      <input
+        class="input"
+        placeholder="Enter nickname"
+        value="{{form.nickName}}"
+        data-field="nickName"
+        bindinput="onInput"
+      />
     </view>
 
     <view class="field">
-      <text class="label">avatarUrl</text>
-      <input class="input" placeholder="请输入头像 URL" value="{{form.avatarUrl}}" data-field="avatarUrl" bindinput="onInput" />
+      <text class="label">Avatar URL</text>
+      <input
+        class="input"
+        placeholder="Enter avatar url"
+        value="{{form.avatarUrl}}"
+        data-field="avatarUrl"
+        bindinput="onInput"
+      />
     </view>
 
     <view class="field">
-      <text class="label">status</text>
-      <input class="input" placeholder="0 正常 / 1 停用" value="{{form.status}}" data-field="status" bindinput="onInput" />
+      <text class="label">Status</text>
+      <input
+        class="input"
+        placeholder="0 means active, 1 means disabled"
+        value="{{form.status}}"
+        data-field="status"
+        bindinput="onInput"
+      />
     </view>
 
     <view class="field">
-      <text class="label">remark</text>
-      <textarea class="textarea" placeholder="备注信息" value="{{form.remark}}" data-field="remark" bindinput="onInput" />
+      <text class="label">Remark</text>
+      <textarea
+        class="textarea"
+        placeholder="Enter remark"
+        value="{{form.remark}}"
+        data-field="remark"
+        bindinput="onInput"
+      />
     </view>
 
-    <button class="btn-primary" loading="{{loading}}" bindtap="onSubmit">保存</button>
+    <button class="btn-primary" loading="{{loading}}" bindtap="onSubmit">Save</button>
   </view>
 </view>

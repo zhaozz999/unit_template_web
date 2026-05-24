@@ -1,33 +1,6 @@
 const { getBaseUrl } = require('../config/env');
-const { getToken, clearToken, clearUser } = require('./auth');
-
-let redirecting = false;
-
-function jumpToLogin() {
-  if (redirecting) {
-    return;
-  }
-  redirecting = true;
-  // 登录态失效时清理本地缓存，避免脏 token 反复触发 401。
-  clearToken();
-  clearUser();
-
-  const pages = getCurrentPages();
-  const currentPage = pages.length > 0 ? pages[pages.length - 1] : null;
-  const route = currentPage ? currentPage.route : '';
-
-  if (route === 'pages/login/index') {
-    redirecting = false;
-    return;
-  }
-
-  wx.reLaunch({
-    url: '/pages/login/index',
-    complete: () => {
-      redirecting = false;
-    },
-  });
-}
+const { getToken, clearSession } = require('./auth');
+const { redirectToLogin } = require('./guard');
 
 function request(options) {
   const {
@@ -36,9 +9,9 @@ function request(options) {
     data = {},
     header = {},
     auth = true,
+    timeout = 15000,
   } = options;
 
-  const baseUrl = getBaseUrl();
   const requestHeader = {
     'Content-Type': 'application/json',
     ...header,
@@ -53,18 +26,19 @@ function request(options) {
 
   return new Promise((resolve, reject) => {
     wx.request({
-      url: `${baseUrl}${url}`,
+      url: `${getBaseUrl()}${url}`,
       method,
       data,
       header: requestHeader,
+      timeout,
       success: (response) => {
         const { statusCode } = response;
         const body = response.data || {};
 
-        // 统一拦截未登录状态，强制跳转登录页。
         if (statusCode === 401 || body.code === 401) {
-          jumpToLogin();
-          reject(new Error('未登录或登录已过期'));
+          clearSession();
+          redirectToLogin();
+          reject(new Error('登录状态已失效'));
           return;
         }
 
@@ -78,6 +52,7 @@ function request(options) {
             resolve(body);
             return;
           }
+
           reject(new Error(body.message || '业务处理失败'));
           return;
         }
@@ -85,7 +60,7 @@ function request(options) {
         resolve(body);
       },
       fail: (error) => {
-        reject(error);
+        reject(new Error(error.errMsg || '网络请求失败'));
       },
     });
   });

@@ -1,30 +1,48 @@
 <view class="container">
   <view class="card login-card">
-    <view class="title">小程序模板登录</view>
-    <view class="subtitle">默认会先静默自动登录，失败后再手动重试</view>
+    <view class="title">{{appName}}</view>
+    <view class="subtitle">Reusable WeChat login page with local API override and development mock support.</view>
 
     <view class="field">
-      <text class="label">当前环境</text>
+      <text class="label">Current environment</text>
       <text class="value">{{runtimeEnv}}</text>
     </view>
 
-    <view class="field" wx:if="{{runtimeEnv !== 'prod'}}">
-      <text class="label">开发 openId（仅开发环境）</text>
+    <view class="field">
+      <text class="label">Current API endpoint</text>
+      <text class="value value-break">{{apiBaseUrl}}</text>
+    </view>
+
+    <view class="field" wx:if="{{runtimeEnv !== 'release'}}">
+      <text class="label">Local API endpoint override</text>
       <input
         class="input"
-        placeholder="用于本地 mock 登录"
+        placeholder="http://127.0.0.1:8086"
+        value="{{apiBaseUrlInput}}"
+        bindinput="onApiBaseUrlInput"
+      />
+      <view class="button-row">
+        <button size="mini" bindtap="saveApiBaseUrl">Save endpoint</button>
+        <button size="mini" bindtap="clearApiBaseUrl">Reset endpoint</button>
+      </view>
+    </view>
+
+    <view class="field" wx:if="{{runtimeEnv !== 'release'}}">
+      <text class="label">Development openId</text>
+      <input
+        class="input"
+        placeholder="Used for local mock login"
         value="{{devOpenId}}"
         bindinput="onDevOpenIdInput"
       />
     </view>
 
-    <view class="auto-tip" wx:if="{{loading}}">正在自动登录，请稍候...</view>
+    <view class="auto-tip" wx:if="{{loading}}">Logging in, please wait...</view>
+    <view class="error-tip" wx:if="{{autoLoginFailed}}">Auto login failed: {{autoLoginMessage}}</view>
 
-    <view class="error-tip" wx:if="{{autoLoginFailed}}">自动登录失败：{{autoLoginMessage}}</view>
-
-    <view class="btn-group" wx:if="{{autoLoginFailed}}">
-      <button class="btn-primary" bindtap="retryAutoLogin">再次自动登录</button>
-      <button class="btn-secondary" loading="{{loading}}" bindtap="handleLogin">手动登录（获取头像昵称）</button>
+    <view class="btn-group">
+      <button class="btn-primary" loading="{{loading}}" bindtap="handleLogin">Login with WeChat</button>
+      <button class="btn-secondary" wx:if="{{runtimeEnv !== 'release'}}" bindtap="retryAutoLogin">Retry local auto login</button>
     </view>
   </view>
 </view>

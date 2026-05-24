@@ -1,35 +1,45 @@
 <view class="container">
+  <view class="card header-card">
+    <view class="title header-title">{{pageTitle}}</view>
+    <view class="subtitle">Keep this page as a sample CRUD module that you can clone for future lightweight mini programs.</view>
+  </view>
+
   <view class="card toolbar">
     <input
       class="search-input"
-      placeholder="按昵称搜索"
+      placeholder="Search by nickname"
       value="{{keyword}}"
       bindinput="onKeywordInput"
       confirm-type="search"
       bindconfirm="onSearch"
     />
     <view class="toolbar-btns">
-      <button size="mini" bindtap="onSearch">查询</button>
-      <button size="mini" type="primary" bindtap="goCreate">新增</button>
-      <button size="mini" type="warn" bindtap="logout">退出</button>
+      <button size="mini" bindtap="goHome">Home</button>
+      <button size="mini" bindtap="onSearch">Search</button>
+      <button size="mini" type="primary" bindtap="goCreate">Create</button>
+      <button size="mini" type="warn" bindtap="logout">Logout</button>
     </view>
   </view>
 
-  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <view wx:if="{{loading}}" class="loading">Loading...</view>
 
-  <view wx:if="{{!loading && users.length === 0}}" class="empty">暂无用户数据</view>
+  <view wx:if="{{!loading && users.length === 0}}" class="card empty-card">
+    <view class="empty-title">No sample users yet</view>
+    <view class="empty-text">Create one record to verify your request layer, form validation, and CRUD refresh flow.</view>
+    <button class="btn-primary" bindtap="goCreate">Create sample user</button>
+  </view>
 
   <view wx:for="{{users}}" wx:key="userId" class="card user-card">
     <view class="row">
       <text class="name">{{item.nickName}}</text>
-      <text class="status">状态: {{item.status}}</text>
+      <text class="status">Status: {{item.status}}</text>
     </view>
-    <view class="sub">用户ID: {{item.userId}}</view>
+    <view class="sub">User ID: {{item.userId}}</view>
     <view class="sub">openId: {{item.openId}}</view>
-    <view class="sub">最近登录: {{item.lastLoginTimeText || '-'}}</view>
+    <view class="sub">Last login: {{item.lastLoginTimeText || '-'}}</view>
     <view class="actions">
-      <button size="mini" bindtap="goEdit" data-user-id="{{item.userId}}">编辑</button>
-      <button size="mini" type="warn" bindtap="onDelete" data-user-id="{{item.userId}}">删除</button>
+      <button size="mini" bindtap="goEdit" data-user-id="{{item.userId}}">Edit</button>
+      <button size="mini" type="warn" bindtap="onDelete" data-user-id="{{item.userId}}">Delete</button>
     </view>
   </view>
 </view>

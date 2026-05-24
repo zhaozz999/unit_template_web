@@ -1,5 +1,5 @@
 .login-card {
-  margin-top: 120rpx;
+  margin-top: 80rpx;
   display: flex;
   flex-direction: column;
   gap: 24rpx;
@@ -20,6 +20,10 @@
   font-size: 28rpx;
   color: #0b1220;
   font-weight: 600;
+}
+
+.value-break {
+  word-break: break-all;
 }
 
 .input {
@@ -48,9 +52,4 @@
   display: flex;
   flex-direction: column;
   gap: 12rpx;
-}
-
-.btn-secondary {
-  width: 100%;
-  border-radius: 12rpx;
 }

@@ -1,102 +1,100 @@
-const { clearToken, clearUser } = require('../../utils/auth');
+const { fetchCurrentUser } = require('../../api/auth');
+const { APP_CONFIG } = require('../../config/app');
+const { getBaseUrl, getBaseUrlOverride, getRuntimeEnv } = require('../../config/env');
+const { getUser, isLogin, setUser } = require('../../utils/auth');
+const { ensureLogin, logout, redirectToLogin } = require('../../utils/guard');
+const { applyLayout } = require('../../utils/layout');
 
 Page({
   data: {
-    safeBottom: 0,
+    appName: APP_CONFIG.appName,
     navHeight: 96,
-    profile: {
-      nickname: 'Developer',
-      accountId: 'ID: 8888-9999'
-    },
-    groups: [
-      {
-        key: 'basic',
-        items: [
-          { key: 'info', label: '个人资料' },
-          { key: 'message', label: '我的消息' },
-          { key: 'security', label: '安全中心' }
-        ]
-      },
-      {
-        key: 'system',
-        items: [
-          { key: 'about', label: '关于系统', value: 'v1.0.0' },
-          { key: 'logout', label: '退出登录', danger: true }
-        ]
-      }
-    ],
-    tabActive: 'profile'
+    safeBottom: 0,
+    runtimeEnv: 'dev',
+    apiBaseUrl: '',
+    usingCustomApi: false,
+    sessionLabel: 'Not logged in',
+    user: null,
+    avatarText: 'T',
   },
 
   onLoad() {
-    this.initLayout();
+    applyLayout(this);
   },
 
-  initLayout() {
-    const sys = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync();
-    const menuRect = wx.getMenuButtonBoundingClientRect ? wx.getMenuButtonBoundingClientRect() : null;
-    const statusBarHeight = sys.statusBarHeight || 20;
+  onShow() {
+    this.refreshProfile();
+  },
 
-    let navHeight = statusBarHeight + 44;
-    if (menuRect && menuRect.top) {
-      navHeight = menuRect.bottom + menuRect.top - statusBarHeight;
-    }
-
-    let safeBottom = 0;
-    if (sys.safeArea && sys.windowHeight) {
-      safeBottom = Math.max(0, sys.windowHeight - sys.safeArea.bottom);
-    }
+  async refreshProfile() {
+    const loggedIn = isLogin();
+    const localUser = getUser() || null;
 
     this.setData({
-      navHeight,
-      safeBottom
+      runtimeEnv: getRuntimeEnv(),
+      apiBaseUrl: getBaseUrl(),
+      usingCustomApi: Boolean(getBaseUrlOverride()),
+      sessionLabel: loggedIn ? 'Active session' : 'Not logged in',
+      user: localUser,
+      avatarText: this.getAvatarText(localUser),
     });
-  },
 
-  onItemTap(event) {
-    const item = event.currentTarget.dataset.item;
-    if (!item) {
+    if (!loggedIn) {
       return;
     }
 
-    if (item.key === 'logout') {
-      clearToken();
-      clearUser();
-      wx.showToast({
-        title: '已退出登录',
-        icon: 'none'
-      });
-      setTimeout(() => {
-        wx.reLaunch({
-          url: '/pages/login/index'
-        });
-      }, 300);
-      return;
-    }
-
-    wx.showToast({
-      title: `${item.label} 暂不跳转`,
-      icon: 'none'
-    });
-  },
-
-  onTabTap(event) {
-    const key = event.currentTarget.dataset.key;
-    if (key === this.data.tabActive) {
-      return;
-    }
-
-    if (key === 'home') {
-      const pages = getCurrentPages();
-      if (pages.length > 1) {
-        wx.navigateBack({
-          delta: 1
-        });
-      } else {
-        wx.redirectTo({
-          url: '/pages/home/index'
+    try {
+      const result = await fetchCurrentUser();
+      const currentUser = result.data ? result.data.user : null;
+      if (currentUser) {
+        setUser(currentUser);
+        const app = getApp();
+        if (app && typeof app.syncSession === 'function') {
+          app.syncSession(currentUser);
+        }
+        this.setData({
+          user: currentUser,
+          avatarText: this.getAvatarText(currentUser),
         });
       }
+    } catch (error) {
+      this.setData({
+        sessionLabel: error.message || 'Profile refresh failed',
+      });
     }
-  }
+  },
+
+  getAvatarText(user) {
+    const name = user && (user.nickName || user.openId);
+    if (!name) {
+      return 'T';
+    }
+    return String(name).charAt(0).toUpperCase();
+  },
+
+  goUserDemo() {
+    if (!ensureLogin()) {
+      return;
+    }
+
+    wx.navigateTo({
+      url: '/pages/user/list/index',
+    });
+  },
+
+  goLogin() {
+    if (isLogin()) {
+      wx.showToast({
+        title: '当前已登录',
+        icon: 'none',
+      });
+      return;
+    }
+
+    redirectToLogin();
+  },
+
+  onLogout() {
+    logout();
+  },
 });
